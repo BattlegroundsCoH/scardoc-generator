@@ -64,6 +64,9 @@ fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, &'static str> {
                     let content = (&ln[3..]).trim();
                     doc_data.push(content.to_string());
                 } else if ln.trim().starts_with("function") {
+                    if doc_data.len() == 0 {
+                        continue;
+                    }
                     let scardoc_data = doc_data.clone();
                     match get_scar_function(ln, scardoc_data) {
                         Err(e) => return Err(e),
@@ -84,6 +87,9 @@ fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, &'static str> {
 fn get_scar_function_name(ln: String) -> Option<String> {
     let start = ln.find(' ')?+1;
     let end = ln.find('(')?;
+    if start >= end {
+        return None;
+    }
     return Some((&ln[start..end]).trim().to_string());
 }
 
@@ -195,11 +201,16 @@ mod tests {
         let names = [
             ("Util_ScarPos", "function Util_ScarPos(xpos, zpos, ypos)"), 
             ("Util_ScarPos", "function Util_ScarPos (xpos, zpos, ypos)"), 
-            ("Util_ScarPos", "function      Util_ScarPos(xpos, zpos, ypos)")
+            ("Util_ScarPos", "function      Util_ScarPos(xpos, zpos, ypos)"),
+            ("", "		function(sgroupid, itemindex, squad)")
         ];
         for name in names {
             let s = name.1.to_string();
-            assert_eq!(super::get_scar_function_name(s).unwrap(), name.0.to_string())
+            if name.0 == "" {
+                assert_eq!(super::get_scar_function_name(s).is_none(), true)
+            } else {
+                assert_eq!(super::get_scar_function_name(s).unwrap(), name.0.to_string())
+            }
         }
     }
 
