@@ -13,7 +13,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         include:
           - os: ubuntu-latest
-            filename: coh3-scardoc-gen
+            filename: coh3-scardoc-gen-linux
           - os: windows-latest
             filename: coh3-scardoc-gen.exe
 
