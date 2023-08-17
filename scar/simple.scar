@@ -1,0 +1,13 @@
+
+--? @shortdesc Converts a 2D top down position to a 3D ScarPosition. returns Position, if y-height is nil, y-height = ground height, terrain ground or walkable
+--? @extdesc
+--? 3D ScarPositions have the x axis left to right, the z axis in to out, and the y axis down to up (y axis represents the height of the terrain).  Use this function to convert a top-down 2D position to a 3D world position.\n\n
+--? Note: (0,0) is in the center of the map.
+--? @result Position
+--? @args Real xpos, Real zpos, Real ypos
+function Util_ScarPos(xpos, zpos, ypos)
+	if ypos == nil then
+		ypos = World_GetHeightAt(xpos,zpos)
+	end
+	return World_Pos(xpos, ypos, zpos)
+end
