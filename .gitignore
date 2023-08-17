@@ -1,1 +1,8 @@
+# Ignore compilation output
 /target
+
+# Ignore lock file
+Cargo.lock
+
+# Ignore output json
+scardoc.json
