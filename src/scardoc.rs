@@ -25,9 +25,8 @@ pub fn generate_scardoc<P: AsRef<Path>>(dir_path: P) -> Result<ScarDoc, &'static
                 Ok(src) => {
                     println!(" ... ok");
                     if src.functions.len() > 0 {
-                        println!("\tSuccessfully read {} scardoc functions", src.functions.len());
+                        results.push(src)
                     }
-                    results.push(src)
                 }
             }
         }

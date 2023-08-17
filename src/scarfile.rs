@@ -26,17 +26,17 @@ pub struct ScarParameter {
     pub arg_required: bool
 }
 
-pub fn get_scar_sourcefile(file_path: String) -> Result<ScarSourceFile, &'static str> {
+pub fn get_scar_sourcefile(file_path: String) -> Result<ScarSourceFile, String> {
 
     // Ensure path exists
     if !Path::new(&file_path).exists() {
-        return Result::Err("file already exists");
+        return Result::Err("file already exists".to_string());
     }
 
     // Open the file
     let file = File::open(&file_path);
     if file.is_err() {
-        return Result::Err("file failed to open for reading");
+        return Result::Err("file failed to open for reading".to_string());
     }
 
     // Collect functions
@@ -50,7 +50,7 @@ pub fn get_scar_sourcefile(file_path: String) -> Result<ScarSourceFile, &'static
 
 }
 
-fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, &'static str> {
+fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, String> {
 
     let reader = BufReader::new(file);
     let mut funcs: Vec<ScarFunction> = Vec::new();
@@ -58,7 +58,7 @@ fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, &'static str> {
     let mut doc_data: Vec<String> = Vec::new();
     for line in reader.lines() {
         match line {
-            Err(_) => return Err("failed to read line"),
+            Err(_) => return Err("failed to read line".to_string()),
             Ok(ln) => {
                 if ln.starts_with("--? ") {
                     let content = (&ln[3..]).trim();
@@ -69,7 +69,7 @@ fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, &'static str> {
                     }
                     let scardoc_data = doc_data.clone();
                     match get_scar_function(ln, scardoc_data) {
-                        Err(e) => return Err(e),
+                        Err(e) => if e.starts_with("fatal:") { return Err(e) } else { println!("{}", e) },
                         Ok(f) => funcs.push(f)
                     }
                     doc_data.clear();
@@ -96,10 +96,18 @@ fn get_scar_function_name(ln: String) -> Option<String> {
 fn get_parameters(args: String, mandatory: bool) -> Option<Vec<ScarParameter>> {
     let by_comma = args.split(',');
     let mut parameters = Vec::new();
+    let mut arg_index = 1;
     for p in by_comma {
         let pp = p.trim();
         match pp.find(' ') {
-            None => return None,
+            None => {
+                parameters.push(ScarParameter { 
+                    arg_name: if pp == "..." { String::from("...") } else { format!("arg{}", arg_index) }, 
+                    arg_type: if pp == "..." { String::from("Any") } else { pp.to_string() },
+                    arg_description: None, 
+                    arg_required: mandatory 
+                })
+            },
             Some(idx) => {
                 let ty_name = &pp[..idx];
                 let pa_name = &pp[idx+1..];
@@ -111,6 +119,7 @@ fn get_parameters(args: String, mandatory: bool) -> Option<Vec<ScarParameter>> {
                 })
             }
         }
+        arg_index+=1;
     }
     Some(parameters)
 }
@@ -119,7 +128,10 @@ fn get_scar_function_args(ln: String) -> Option<Vec<ScarParameter>> {
     match ln.find('[') {
         None => get_parameters(ln, true),
         Some(idx) => {
-            let mandatory_section = &ln[..idx];
+            let mut mandatory_section = (&ln[..idx]).trim_end();
+            if mandatory_section.ends_with(",") {
+                mandatory_section = &mandatory_section[..(mandatory_section.len()-1)]
+            }
             let mut mandatory = get_parameters(mandatory_section.to_string(), true)?;
             let mut optional_section = (&ln[idx+1..]).trim_end_matches("]");
             if optional_section.starts_with(",") {
@@ -136,13 +148,10 @@ fn get_scar_function_args(ln: String) -> Option<Vec<ScarParameter>> {
     }
 }
 
-fn get_scar_function(func_name: String, func_data: Vec<String>) -> Result<ScarFunction, &'static str> {
+fn get_scar_function(func_name: String, func_data: Vec<String>) -> Result<ScarFunction, String> {
     
     // Get complete script name
-    let name = get_scar_function_name(func_name);
-    if name.is_none() {
-        return Err("expected scar function name but found none");
-    }
+    let name = get_scar_function_name(func_name).ok_or("expected scar function name but found none")?;
 
     // Define function setup
     let mut description_short: Option<String> = None;
@@ -167,24 +176,18 @@ fn get_scar_function(func_name: String, func_data: Vec<String>) -> Result<ScarFu
             is_extended_desc = false
         } else if dataline.starts_with("@args") {
             let content = (&dataline[5..]).trim().to_string();
-            let args = get_scar_function_args(content);
-            if args.is_none() {
-                return Err("failed to parse arguments directive");
-            }
-            for arg in args.unwrap() {
-                parameters.push(arg)
-            }
+            let err_content = content.clone();
+            let args = get_scar_function_args(content).ok_or(format!("failed to parse arguments directive '{}'", err_content))?;
+            parameters.extend(args);
             is_extended_desc = false
         } else if is_extended_desc {
             description_extended.push(dataline)
-        } else {
-            println!("skipping line '{}' because there's no recognized scardoc directive", dataline)
         }
     }
 
     // Return result
     Ok(ScarFunction { 
-        name: name.unwrap(), 
+        name: name, 
         description_short, 
         description_extended, 
         example: None, 
@@ -214,12 +217,14 @@ mod tests {
         }
     }
 
-    
     #[test]
     fn can_get_function_parameters_names() {
         let args = [
-            ([("Real", "xpos", true), ("Real", "zpos", true), ("Real", "ypos", true)], "Real xpos, Real zpos, Real ypos"),
-            ([("Real", "xpos", true), ("Real", "zpos", true), ("Real", "ypos", false)], "Real xpos, Real zpos[, Real ypos]"),
+            (vec![("Real", "xpos", true), ("Real", "zpos", true), ("Real", "ypos", true)], "Real xpos, Real zpos, Real ypos"),
+            (vec![("Real", "xpos", true), ("Real", "zpos", true), ("Real", "ypos", false)], "Real xpos, Real zpos[, Real ypos]"),
+            (vec![("LuaTable", "arg1", true)], "LuaTable"),
+            (vec![("SyncWeaponID", "weapon", true), ("PlayerID", "player", false)], "SyncWeaponID weapon, [PlayerID player]"),
+            (vec![("String", "race", true), ("String", "race2", false), ("Any", "...", false)], "String race[, String race2, ...]"),
         ];
         for arg in args {
             let result = super::get_scar_function_args(arg.1.to_string());
