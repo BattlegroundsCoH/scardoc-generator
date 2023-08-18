@@ -10,18 +10,29 @@ pub struct ScarSourceFile {
 #[derive(Serialize, Deserialize)]
 pub struct ScarFunction {
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description_short: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub description_extended: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub example: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub return_description: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub return_type: Option<String>,
-    pub parameters: Vec<ScarParameter>
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub parameters: Vec<ScarParameter>,
+    #[serde(skip_serializing)]
+    pub source_file: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<String>
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ScarParameter {
     pub arg_name: String,
     pub arg_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arg_description: Option<String>,
     pub arg_required: bool
 }
@@ -70,7 +81,10 @@ fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, String> {
                     let scardoc_data = doc_data.clone();
                     match get_scar_function(ln, scardoc_data) {
                         Err(e) => if e.starts_with("fatal:") { return Err(e) } else { println!("{}", e) },
-                        Ok(f) => funcs.push(f)
+                        Ok(mut f) => {
+                            f.source_file = Some("".to_string());
+                            funcs.push(f)
+                        }
                     }
                     doc_data.clear();
                 } else {
@@ -193,7 +207,9 @@ fn get_scar_function(func_name: String, func_data: Vec<String>) -> Result<ScarFu
         example: None, 
         return_description: None, 
         return_type, 
-        parameters 
+        parameters,
+        source_file: None,
+        groups: Vec::new()
     })
 }
 

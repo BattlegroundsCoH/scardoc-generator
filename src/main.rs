@@ -17,7 +17,9 @@ fn main() {
                     println!("Loaded scardoc");
                     match save_to_json(&doc, "scardoc.json") {
                         Err(e) => eprintln!("{}", e),
-                        Ok(_) => {}
+                        Ok(_) => {
+                            println!("Saved scardoc to {}", "scardoc.json");
+                        }
                     }
                 }
             }
