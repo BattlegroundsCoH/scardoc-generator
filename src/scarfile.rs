@@ -7,7 +7,7 @@ pub struct ScarSourceFile {
     pub functions: Vec<ScarFunction>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ScarFunction {
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -22,13 +22,13 @@ pub struct ScarFunction {
     pub return_type: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub parameters: Vec<ScarParameter>,
-    #[serde(skip_serializing)]
+    //#[serde(skip_serializing)]
     pub source_file: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub groups: Vec<String>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ScarParameter {
     pub arg_name: String,
     pub arg_type: String,
@@ -51,7 +51,7 @@ pub fn get_scar_sourcefile(file_path: String) -> Result<ScarSourceFile, String> 
     }
 
     // Collect functions
-    match get_scar_functions(file.unwrap()) {
+    match get_scar_functions(file.unwrap(), &file_path) {
         Err(e) => Err(e),
         Ok(funcs) => Ok(ScarSourceFile{
             source_name: file_path,
@@ -61,7 +61,7 @@ pub fn get_scar_sourcefile(file_path: String) -> Result<ScarSourceFile, String> 
 
 }
 
-fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, String> {
+fn get_scar_functions(file: File, scar_source: &String) -> Result<Vec<ScarFunction>, String> {
 
     let reader = BufReader::new(file);
     let mut funcs: Vec<ScarFunction> = Vec::new();
@@ -82,7 +82,7 @@ fn get_scar_functions(file: File) -> Result<Vec<ScarFunction>, String> {
                     match get_scar_function(ln, scardoc_data) {
                         Err(e) => if e.starts_with("fatal:") { return Err(e) } else { println!("{}", e) },
                         Ok(mut f) => {
-                            f.source_file = Some("".to_string());
+                            f.source_file = Some(scar_source.clone());
                             funcs.push(f)
                         }
                     }

@@ -48,7 +48,7 @@ fn is_scar_file(entry: &DirEntry) -> bool {
     entry.file_type().is_file() && entry.path().extension() == Some("scar".as_ref())
 }
 
-fn categorise_functions(sources: Vec<ScarSourceFile>) -> Vec<ScarDocCategory> {
+pub fn categorise_functions(sources: Vec<ScarSourceFile>) -> Vec<ScarDocCategory> {
 
     let mut map: HashMap<String, ScarDocCategory> = HashMap::new();
 
