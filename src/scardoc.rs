@@ -3,16 +3,33 @@ use std::{path::Path, collections::HashMap};
 use serde::{Serialize, Deserialize};
 
 use crate::scarfile::*;
+use crate::scarenum::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct ScarDoc {
-    pub categories: Vec<ScarDocCategory>
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub categories: Vec<ScarDocCategory>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub enums: Vec<ScarEnum>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub globals: Vec<ScarGlobal>
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ScarDocCategory {
     pub category_name: String,
     pub category_functions: Vec<ScarFunction>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ScarGlobal {
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub global_type: Option<String>
 }
 
 pub fn generate_scardoc<P: AsRef<Path>>(dir_path: P) -> Result<ScarDoc, &'static str> {
@@ -38,9 +55,12 @@ pub fn generate_scardoc<P: AsRef<Path>>(dir_path: P) -> Result<ScarDoc, &'static
         }
     }
 
-    let categorised = categorise_functions(results);
+    let categorised = categorise_functions(results)
+        .into_iter()
+        .filter(|x| !x.category_functions.is_empty())
+        .collect();
 
-    Ok(ScarDoc { categories: categorised })
+    Ok(ScarDoc { categories: categorised, enums: Vec::new(), globals: Vec::new() })
     
 }
 
