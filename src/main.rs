@@ -4,7 +4,9 @@ use scardoc::ScarDoc;
 
 mod scardoc;
 mod scarfile;
+mod scarenum;
 mod scardocmerger;
+mod scardump;
 
 fn main() {
     
@@ -27,6 +29,9 @@ fn main() {
         [_, flag, dir_path] if flag == "-g" => {
             main_generate_scardoc(dir_path.clone());
         }
+        [_, flag, file_path] if flag == "-d" => {
+            main_generate_scardoc_from_dump(file_path.clone());
+        }
         _ => {
             println!("Invalid arguments. Usage: \n\
                      -m file1.json file2.json, ... \n\
@@ -34,6 +39,18 @@ fn main() {
         }
     }
 
+}
+
+fn main_generate_scardoc_from_dump(dump_file: String) {
+    match scardump::read_scardump(dump_file) {
+        Err(e) => eprintln!("{}", e),
+        Ok(doc) => {
+            match save_to_json(&doc, "dump_scardoc.json") {
+                Err(e) => eprintln!("{}", e),
+                Ok(_) => {}
+            }
+        }
+    }
 }
 
 fn main_generate_scardoc(dir_path: String) {

@@ -7,3 +7,4 @@ Cargo.lock
 # Ignore output json
 scardoc.json
 merged_scardoc.json
+dump_scardoc.json

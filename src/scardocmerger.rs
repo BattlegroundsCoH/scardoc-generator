@@ -21,12 +21,12 @@ pub fn merge_scardoc(main: &ScarDoc, second: &ScarDoc) -> ScarDoc {
         functions: funcs.into_values().collect()
     }];
     let categories = categorise_functions(temp_source_file);
-    ScarDoc { categories }
+    ScarDoc { categories, enums: Vec::new(), globals: Vec::new() }
 }
 
 impl ScarFunction {
     pub fn merge_with(&mut self, other: &Self) {
-        println!("Merging functions {}", self.name)
+        println!("Merging function {}", self.name)
         // TODO: Define the merge logic, e.g.:
         // self.some_field = self.some_field.or(other.some_field.clone());
         // self.another_field = other.another_field; // if you want to overwrite
@@ -34,6 +34,8 @@ impl ScarFunction {
 }
 
 mod tests {
+    use std::collections::HashMap;
+
     use crate::{scardoc::{ScarDoc, ScarDocCategory}, scarfile::{ScarFunction, ScarParameter}};
 
 
@@ -58,7 +60,9 @@ mod tests {
                     source_file: None,
                     groups: Vec::new()
                 }]
-            }]
+            }],
+            enums: vec![],
+            globals: Vec::new()
         };
         let scardoc_b = ScarDoc{
             categories: vec![ScarDocCategory{
@@ -79,7 +83,9 @@ mod tests {
                     source_file: None,
                     groups: Vec::new()
                 }]
-            }]
+            }],
+            enums: vec![],
+            globals: Vec::new()
         };
 
         let merged = super::merge_scardoc(&scardoc_a, &scardoc_b);
