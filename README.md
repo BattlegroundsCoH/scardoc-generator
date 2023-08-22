@@ -11,6 +11,16 @@ To use the application simply run it through Powershell/Cmd with a path to the s
 
 This will generate a `scardoc.json` file that you can use to get an easy and searchable documentation of your scar repository.
 
+You may also pass `-g` to generate the scardoc of the specified scar repository.
+
+It's also possible to merge different scardoc files. This is useful if you need to update a manually defined scardoc with an updated scardoc. For instance you can merge `scardoc_manual.json` into `scardoc_generated.json` by doing:
+
+```bash
+./coh3-scardoc-gen -m scardoc_generated.json scardoc_manual.json
+```
+
+The `-m` command will accept any amount of scardoc files and merge them together into one scardoc file.
+
 ### Documenting Scar Code
 
 The generator currently picks up functions to be documented if they're in the format

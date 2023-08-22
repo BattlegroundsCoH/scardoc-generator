@@ -9,7 +9,7 @@ const MODE_SCARDOC_FUNCTIONS:i32 = 1;
 const MODE_SCARDOC_GLOBALS:i32=2;
 const MODE_SCARDOC_ENUMS:i32=3; // in dump they're refered to as unknowns
 
-struct scardump_unknown {
+struct ScardumpUnknown {
     pub is_enum:bool,
     pub vals: Vec<String>
 }
@@ -108,9 +108,9 @@ fn read_global(ln: String) -> Option<ScarGlobal> {
     }
 }
 
-fn read_unknowns(ln: String, re: &Regex) -> Option<scardump_unknown> {
+fn read_unknowns(ln: String, re: &Regex) -> Option<ScardumpUnknown> {
     if let Some(captures) = re.captures(ln.as_str()) {
-        return Some(scardump_unknown { is_enum: true, vals: vec![
+        return Some(ScardumpUnknown { is_enum: true, vals: vec![
             String::from(captures.get(1).unwrap().as_str()), 
             String::from(captures.get(3).unwrap().as_str()), 
             String::from(captures.get(4).unwrap().as_str())
@@ -119,7 +119,7 @@ fn read_unknowns(ln: String, re: &Regex) -> Option<scardump_unknown> {
     None
 }
 
-fn map_unknowns_to_enum(u:Vec<scardump_unknown>) -> Vec<ScarEnum> {
+fn map_unknowns_to_enum(u:Vec<ScardumpUnknown>) -> Vec<ScarEnum> {
     let mut map: HashMap<String, Vec<(String,String)>> = HashMap::new();
     for entry in u {
         if entry.is_enum {

@@ -21,7 +21,7 @@ pub struct ScarDocCategory {
     pub category_functions: Vec<ScarFunction>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ScarGlobal {
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
