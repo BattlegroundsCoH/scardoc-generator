@@ -71,6 +71,9 @@ fn get_scar_functions(file: File, scar_source: &String) -> Result<Vec<ScarFuncti
         match line {
             Err(_) => return Err("failed to read line".to_string()),
             Ok(ln) => {
+                if ln.len() == 0 {
+                    continue;
+                }
                 if ln.starts_with("--? ") {
                     let content = (&ln[3..]).trim();
                     doc_data.push(content.to_string());
